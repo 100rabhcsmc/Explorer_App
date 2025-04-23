@@ -1,7 +1,16 @@
-import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, Text, TouchableOpacity, View, StyleSheet, Button } from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {
+  ActivityIndicator,
+  FlatList,
+  Text,
+  TouchableOpacity,
+  View,
+  StyleSheet,
+  Button,
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
+import Tasks from './Task';
+import {useFocusEffect} from '@react-navigation/native';
 
 const FILTERS = {
   ALL: 'All',
@@ -9,7 +18,7 @@ const FILTERS = {
   INCOMPLETE: 'Incomplete',
 };
 
-const HomeScreen = ({ navigation }) => {
+const HomeScreen = ({navigation}) => {
   const [tasks, setTasks] = useState([]);
   const [filteredTasks, setFilteredTasks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -28,7 +37,9 @@ const HomeScreen = ({ navigation }) => {
         setLoading(false);
         return;
       }
-      const response = await fetch('https://jsonplaceholder.typicode.com/todos');
+      const response = await fetch(
+        'https://jsonplaceholder.typicode.com/todos',
+      );
       const data = await response.json();
       setTasks(data);
       setFilteredTasks(applyFilter(data, filter));
@@ -43,9 +54,9 @@ const HomeScreen = ({ navigation }) => {
   const applyFilter = (tasks, filter) => {
     switch (filter) {
       case FILTERS.COMPLETED:
-        return tasks.filter((t) => t.completed);
+        return tasks.filter(t => t.completed);
       case FILTERS.INCOMPLETE:
-        return tasks.filter((t) => !t.completed);
+        return tasks.filter(t => !t.completed);
       default:
         return tasks;
     }
@@ -55,31 +66,18 @@ const HomeScreen = ({ navigation }) => {
     fetchTasks();
   }, []);
 
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchTasks();
+    }, []),
+  );
+
   useEffect(() => {
     setFilteredTasks(applyFilter(tasks, filter));
   }, [filter, tasks]);
 
-  const renderTask = ({ item }) => (
-    <TouchableOpacity style={styles.task} onPress={() => navigation.navigate('Detail', { task: item })}>
-      <View style={styles.taskInfo}>
-        <Text style={styles.title}>{item.title}</Text>
-       
-      </View>
-      {item.completed ? (
-        <View style={{flexDirection:"row",alignItems:"center"}}>
-          <Text style={{color:"green"}}>✓</Text>
-         <Text style={{marginStart:8}}>Completed</Text>
-         </View>
-      ) : (
-         <View style={{flexDirection:"row",alignItems:"center"}}>
-        <Text style={{color:"red"}}>✗</Text>
-         <Text style={{marginStart:8}}>Incomplete</Text>
-         </View>
-      )}
-    </TouchableOpacity>
-  );
-
-  if (loading) return <ActivityIndicator style={styles.centered} size="large" />;
+  if (loading)
+    return <ActivityIndicator style={styles.centered} size="large" />;
   if (error)
     return (
       <View style={styles.centered}>
@@ -89,26 +87,25 @@ const HomeScreen = ({ navigation }) => {
     );
 
   return (
- <View style={styles.container}>
-  <FlatList
-    data={filteredTasks}
-    renderItem={renderTask}
-    keyExtractor={(item) => item.id.toString()}
-    ListHeaderComponent={
-      <View style={styles.filterContainer}>
-        {Object.values(FILTERS).map((f) => (
-          <Button
-            key={f}
-            title={f}
-            onPress={() => setFilter(f)}
-            color={filter === f ? 'blue' : 'gray'}
-          />
-        ))}
-      </View>
-    }
-  />
-</View>
-
+    <View style={styles.container}>
+      <FlatList
+        data={filteredTasks}
+        renderItem={({item}) => <Tasks item={item} navigation={navigation} />}
+        keyExtractor={item => item.id.toString()}
+        ListHeaderComponent={
+          <View style={styles.filterContainer}>
+            {Object.values(FILTERS).map(f => (
+              <Button
+                key={f}
+                title={f}
+                onPress={() => setFilter(f)}
+                color={filter === f ? 'blue' : 'gray'}
+              />
+            ))}
+          </View>
+        }
+      />
+    </View>
   );
 };
 
@@ -119,18 +116,6 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
     backgroundColor: '#fff',
-  },
-  task: {
-    padding: 16,
-    marginVertical: 8,
-    borderWidth: 1, 
-    borderRadius: 8,
-    borderColor: '#001a33',
-  },
-  title: {
-    fontWeight: 'bold',
-    fontSize: 16,
-    marginBottom: 4,
   },
   centered: {
     flex: 1,
